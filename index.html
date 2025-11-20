@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!--COMMENT-->
+    <!--title: text to appear in the page tab-->
+    <title>Carnival Bottles 3</title>
+
+    <!--icon - also known as "favicon: the tiny image to appear in the tab-->
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://cdn.glitch.com/e1c08528-6ac4-407c-8785-677d0f3bb4f4%2FT_favicon.png?v=1599159318701"
+      sizes="16x16"
+    />
+
+    <!-- metadata: machine readable, will not appear on the page - specify page description, keywords, author of the document, last modified, and other metadata -->
+    <meta charset="UTF-8" />
+    <meta name="description" content="Carnival Bottles 3" />
+    <meta
+      name="keywords"
+      content="interactiation,A-Frame,aframe,webvr,blocks,play,castel,beginner mind, projectile, launcher"
+    />
+    <meta name="author" content="Jon Strobel" />
+
+    <!--script: include the a-frame and physics javascript-->
+    <script src="https://aframe.io/releases/1.0.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/donmccurdy/aframe-physics-system/v4.0.1/dist/aframe-physics-system.min.js"></script>
+
+    <!--build a projectile launcher-->
+
+    <script>
+      //aframe allows building components in javascript - this one is called "launcher" (must be applied to the scene or something in it)
+      AFRAME.registerComponent("launcher", {
+        //this function will be called when the scene initializes
+        init: function() {
+          //get the scene
+          var scenic = document.querySelector("a-scene");
+
+          //whenever a key is released, run a function for that event
+          //list of keycodes here:  http://gcctech.org/csc/javascript/javascript_keycodes.htm
+          document.body.onkeyup = function(e) {
+            //if the key released is <spacebar>
+            if (e.keyCode == 32) {
+              //get the camera
+              var cam = document.querySelector("a-scene").camera.el.object3D;
+              //create a 3D vector (x, y, z)
+              var camVec = new THREE.Vector3();
+              //get the camera "direction" in x, y, z space
+              var camDir = cam.getWorldDirection(camVec);
+
+              //run this only if the camera is looking at or above the horizon
+              //if(cam.rotation.x >= 0)
+
+              //FYI: this block of code will log to the console the numers that make up the directional vector of the camera
+              //console.log("camDir.x = " + camDir.x);
+              //console.log("camDir.y = " + camDir.y);
+              //console.log("camDir.z = " + camDir.z);
+
+              //acceleration variable for convenience
+              var a = 7;
+
+              //create our own Vector3-like variable describing the exact opposite of the camera direction * 24, this vector will supply the velocity for our projectile
+              var velo = {
+                x: -camDir.x * 24,
+                y: -camDir.y * 24,
+                z: -camDir.z * 24
+              };
+
+              //velocity with acceleration variable
+              var veloacc = {
+                x: -camDir.x * a,
+                y: -camDir.y * a + 3,
+                z: -camDir.z * a
+              };
+
+              //create a projectile (must be "appended" to the scene)
+              var projectile = document.createElement("a-entity");
+              //set color
+              projectile.setAttribute("material", { color: "#ff7b00" });
+              projectile.setAttribute("id", "ball");
+              //console.log("ball id:", projectile.id);
+
+              //set the projectile's attrubutes in javascript - not as easy as declarative html, but not rocket science either...
+              projectile.setAttribute("geometry", {
+                primitive: "sphere",
+                radius: 0.1
+              });
+              /*
+                //with the 'material' property commented, a default material will be ranomly generated each time
+                projectile.setAttribute('material', {color: 'gray'});
+                */
+              //makes the projectile very massive
+              projectile.setAttribute("dynamic-body", { mass: 13 });
+              //projectile.setAttribute("dynamic-body", {shape: none} );  //cannot set shape?
+              projectile.object3D.position.set(
+                cam.position.x,
+                cam.position.y - 0.25,
+                cam.position.z
+              );
+              projectile.object3D.rotation.x = THREE.Math.degToRad(90);
+              //gives the projectile an initial velocity into the the direction the camera's looking
+              projectile.setAttribute("velocity", veloacc, {});
+              //appends the projectile as a "child" of the scene
+              scenic.appendChild(projectile);
+              //gives the projectile a lifetime of 6 seconds then removes it from the scene
+              setTimeout(function() {
+                scenic.removeChild(projectile);
+              }, 4000);
+            }
+          };
+        } //init end
+      }); //register component end
+    </script>
+
+    <script>
+      // PAUSER
+      AFRAME.registerComponent("pauser", {
+        init: function() {
+          var scenic = document.querySelector("#scenic"); //this sets the document = <a-scene> scenic
+          var cricketL = document.querySelector("#cr_loud"); //thsese set cricket vars to cricket sound entities
+          var cricketQ = document.querySelector("#cr_quiet");
+          var cricketA = document.querySelector("#cr_amb");
+          var cricketM = document.querySelector("#cr_mkt");
+          var cricketC = document.querySelector("#cr_cnt");
+          var mbox = document.querySelector("#musicbox"); //should set mbox = <entity> musicbox 
+          var creepyplayer = document.querySelector("#creepyplayer");
+
+          var control = 0; //setting a variable to stop the scene click listener from running every time the user clicks the window
+          //console.log("Static Is = " + music)
+
+          setTimeout(function() {
+            //sets timout of 1 ms (see second parameter)
+            scenic.pause(); //this pauses the scene
+          }, 1);
+
+          //console.log("THIS IS IS" + docu);
+          setTimeout(function() {
+            var docu = document;
+
+            docu.addEventListener("click", function() {
+              //event listener attached to document, listens for user to click the "document" (scene)
+              if (control == 0) {
+                scenic.play(); //this plays the scene
+                cricketL.components.sound.playSound(); //these play the sounds for the cricket entities
+                cricketQ.components.sound.playSound();
+                cricketA.components.sound.playSound();
+                cricketM.components.sound.playSound();
+                cricketC.components.sound.playSound();
+                creepyplayer.components.sound.playSound();
+                control++;
+                console.log(control);
+              }
+            });
+          }, 1000);
+        }
+      });
+    </script>
+
+    <script>
+      AFRAME.registerComponent(
+        "playmusicbox",
+
+        {
+          init: function() {
+            var scenic = document.querySelector("#scenic");
+            var mbox = document.getElementById("#musicbox");
+            var mboxstop = document.getElementById("#musicboxstop");
+            var creepyplayer = document.querySelector("#creepyplayer");
+            
+
+            mbox.addEventListener("collide", function(event) {
+              mbox.components.sound.playSound();
+              creepyplayer.components.sound.pauseSound();
+              console.log("Music box collided with", event.detail.body.el.id);
+            });
+
+            mboxstop.addEventListener("collide", function(event) {
+              mbox.components.sound.pauseSound();
+              creepyplayer.components.sound.playSound();
+              console.log("Mute box collided with", event.detail.body.el.id);
+            });
+          }
+        }
+      );
+    </script>
+
+    <!--build script to play sounds when bottles are hit-->
+    <script>
+      AFRAME.registerComponent("hitsounds", {
+        init: function() {
+          var scenic = document.querySelector("#scenic");
+          var table = document.getElementById("#center_table"); //NOTE had to change to table because bottles were too numerous
+
+          table.addEventListener("collide", function(event) {
+            console.log("Entity collided with", event.detail.collidingEntity);
+            table.components.sound.playSound();
+          });
+        }
+      });
+    </script>
+
+    <!--build script to add more bottles-->
+    <script>
+      AFRAME.registerComponent("bottle_placer", {
+        init: function() {
+          //call the function on init
+          this.putBottles(); //using "this" tells the component to use the function inside itself
+        }, //end "init"
+        putBottles: function() //creating this as a function outside of init allows it to be called by other components
+        {
+          var scenic = document.querySelector("#scenic");
+          var textureLoader = new THREE.TextureLoader();
+
+          var bottleTexture = textureLoader.load(
+            "https://cdn.glitch.com/8b07de7b-d3e9-49ba-81ae-ba1a8ee461db%2Fmilk_label.png?v=1600102174944"
+          );
+
+          var numBottles = 0; //total number of bottles
+
+          var origPosition = new THREE.Vector3(0.3, 0.84, -4.6); //position for first bottle, all other bottles will be placed to the right/above 0.3, 0.84, -4.5
+
+          //"put" is a function that creates the bottles given their row and amount of bottles
+          put(0, 5);
+          put(1, 4);
+          put(2, 3);
+          put(3, 2);
+          put(4, 1);
+
+          //removeBottle(0);
+
+          console.log("Number oF Bottles: ", numBottles);
+
+          //function put takes parameters "level" and "bottles" for height and number of bottles
+          function put(level, bottles) {
+            //copy the original position of the bottles
+            var nextPosition = new THREE.Vector3().copy(origPosition);
+
+            //if the level is not zero, there are some offsets to put
+            if (level >= 1) {
+              nextPosition.y += 0.33 * level; //this makes the bottles height taller 0.33
+              nextPosition.x -= 0.075 * level; //this moves the bottles x offset for a cleaner pyrimid shape
+              nextPosition.z -= 0.016 * level; //this SHOULD help with some of the bottles randomly falling over
+            }
+
+            var i = 0;
+            for (i = 0; i < bottles; i++) {
+              var placedBottle = document.createElement("a-entity");
+
+              //cone geometry: radius, height, radialSegments
+              var cone = document.createElement("a-entity");
+              var coneGeom = new THREE.ConeBufferGeometry(0.1, 0.3, 12);
+              var coneMat = new THREE.MeshStandardMaterial({ color: "white" });
+
+              //cylinder for top of bottle
+              var topGeom = new THREE.CylinderBufferGeometry(
+                0.07,
+                0.05,
+                0.3,
+                12
+              );
+              var topMesh = new THREE.Mesh(topGeom, coneMat);
+              var top = document.createElement("a-entity");
+              top.setObject3D("mesh", topMesh);
+
+              var coneMesh = new THREE.Mesh(coneGeom, coneMat);
+              cone.setObject3D("mesh", coneMesh);
+              //cone.object3D.position.set(origPosition.x, origPosition.y, origPosition.z);
+
+              placedBottle.object3D.position.set(
+                nextPosition.x,
+                nextPosition.y,
+                nextPosition.z
+              );
+              //placedBottle.object3D.getWorldPosition(nextPosition);
+
+              //placedBottle.object3D.position.set(1, 3, -3)
+              placedBottle.setAttribute("dynamic-body", {
+                mass: 7,
+                angularDamping: 0.05, linearDamping: 0.01
+              }); //linearDamping: , angularDamping:
+              placedBottle.setAttribute("shadow", {});
+
+              var bottomGeom = new THREE.CylinderBufferGeometry(
+                0.1,
+                0.105,
+                0.3,
+                12
+              );
+              var bottomMat = new THREE.MeshStandardMaterial({
+                color: "white",
+                map: bottleTexture
+              });
+              //mesh = geometry + material
+              var bottleMesh = new THREE.Mesh(bottomGeom, bottomMat);
+              //set mesh onto object
+              placedBottle.setObject3D("mesh", bottleMesh);
+
+              //attach cone to bottle cylinder
+              placedBottle.appendChild(cone);
+              //attach top cylinder to bottle cylinder
+              placedBottle.appendChild(top);
+              //adjust children's position
+              cone.object3D.position.set(0, 0.3, 0);
+              top.object3D.position.set(0, 0.3, 0);
+              //adjust rotation
+              placedBottle.object3D.rotation.set(0, 135, 0);
+              placedBottle.object3D.scale.set(0.55, 0.55, 0.55);
+              placedBottle.setAttribute("id", "bottle");
+              console.log("ID: ", placedBottle.id);
+
+              //!!!!!!TO DO HERE!!!!!!!!
+              //
+              //complete-finish remove bottles function
+              //complete-add something to set off remove bottles function
+              //complete-add something to replace bottles (with limiter)
+
+              placedBottle.setAttribute("sound", {
+                src:
+                  "https://cdn.glitch.com/8b07de7b-d3e9-49ba-81ae-ba1a8ee461db%2Fcup_sound.wav?v=1600112454922",
+                positional: true,
+                autoplay: false,
+                volume: 0.9,
+                loop: false,
+                poolSize: 1
+              }); //this adds sound directly from the assets folder
+
+              var t = 0; //timer variable
+              placedBottle.addEventListener("collide", function(event) {
+                var collided = event.detail.body.el; //collided set to collided body object
+                if (collided.id == "ball" && t == 0) {
+                  //if collided entity has id of "ball"
+                  t = 1; //
+                  placedBottle.components.sound.playSound(); //play the sound attached
+                  console.log(
+                    "bottle collided with ",
+                    event.detail.body.el.id,
+                    " attempting to play sound"
+                  ); //log it to the console
+                  setTimeout(function() {
+                    t = 0;
+                  }, 500);
+                }
+                if (t == 1) {
+                  console.log("too many collisions to play sound!");
+                }
+              }); //end event listener
+
+              scenic.appendChild(placedBottle);
+
+              console.log("bottle placed!", nextPosition);
+              nextPosition.x -= 0.16; //this spaces the bottles apart (constant no matter what level) 0.15
+
+              numBottles++; //increase the count of bottles
+            } //end for loop
+          } //end "put" function
+
+          console.log("function called");
+        }
+      });
+    </script>
+
+    <script>
+      //bottle remover component
+      AFRAME.registerComponent(
+        "bottle_remover",
+        {
+          init: function() {
+            var scenic = document.querySelector("a-scene");
+            var trashCan = document.getElementById("#trash_can");
+            var placerComponent = document.querySelector("[bottle_placer]")
+              .components.bottle_placer; //this gets the
+
+            trashCan.addEventListener("collide", function(event) {
+              var collided = event.detail.body.el;
+              if (collided.id == "ball") {
+                console.log("Trash Can collided with: ", collided.id);
+                removeBottles();
+                placerComponent.putBottles();
+              }
+            }); //end event listener
+
+            function removeBottles() {
+              var collectedBottles = scenic.querySelectorAll("[dynamic-body]"); //this selects all dynamic bodies on the scene NOTE: it works very well
+              console.log(
+                "collected objects: ",
+                collectedBottles.length,
+                " and ID ",
+                collectedBottles[collectedBottles.length - 1].id
+              ); //this tells us that the last objects collected may not be bottles
+              for (var i = 0; i < collectedBottles.length; i++) {
+                if (collectedBottles[i].id == "bottle") {
+                  //if the id of the object collected is actually a bottle
+                  scenic.removeChild(collectedBottles[i]); //remove bottle
+                  console.log("Bottle ", i, " removed"); //log to console
+                } //end if
+              } //end for
+            } //end removeBottles
+          } //end function
+        } //end inside component
+      ); //end registercomponent "bottle_remover"
+    </script>
+  </head>
+
+  <body>
+    <!--TO DO:
+      COMPLETE-add variable and logic so that "pauser" only runs once
+      COMPLETE- write script to place bottles NOTE: this would NOT work trying to clone existing bottles
+      COMPLETE-change projectile torus to sphere
+      COMPLETE-increase ball acceleration
+      COMPLETE-add backdrop
+      COMPLETE-add cricket noises
+      COMPLETE-move music boxes
+      COMPLETE-change music boxes/add text to make function more obvious (mute sound icon?)
+      COMPLETE-move trash can
+      make trash can polyhedron (cylinder w/ extruded cylinder from THREEfundamentals)
+      COMPLETE-make world lighting darker and add more ambient lighting
+      COMPLETE-make event listener more specific to collisions NOTE: could not figure out how to get collision handler to return entity name
+      COMPLETE-create emit event for when profectile hits milkbottle
+      add player collider NOTE: try adding camera as child of invisible static body, put wasdcontrols on that parent
+
+      LONG TERM TO DO:
+      find "circus organ" music, or something of the type
+      stop bottles from falling over
+      COMPLETE-find a ground texture
+      fix asynchronus sphere mesh/shader
+      find spherical baseball texture
+      add something to turn off cricket noises
+      
+-->
+    <!--a-scene: references content in the script src to create the A-Frame scene, gives it an identifier, colors its background and applies the registered "launcher" component -->
+    <a-scene
+      id="scenic"
+      background="color: black"
+      vr-mode-ui="enabled: false"
+      physics="debug: false; gravity: "
+      pauser
+      launcher
+      playmusicbox
+      bottle_placer
+      bottle_remover
+    >
+      <!-- a-assets is where to declare images, sounds mixins and etc -- the src is a url - in this case taken from the assets folder in Glitch -- add "crossorigin" to prevent possible error  -->
+      <a-assets>
+        <!--load the logo image for the logohedron-->
+        <img
+          id="grasstexture"
+          src="https://cdn.glitch.com/285e05bc-2570-484d-933a-dfb85c69cd13%2Fseamless_grass1.jpg?v=1601932258120"
+          crossorigin="anonymous"
+        />
+        <img
+          id="texture_iam"
+          src="https://cdn.glitch.com/95d403f5-4836-4f52-83ce-a43a613dc5c9%2FInterActiMationLogo_2048powerOf2.png"
+          crossorigin="anonymous"
+        />
+        <img
+          id="HR_wood"
+          src="https://cdn.glitch.com/8b07de7b-d3e9-49ba-81ae-ba1a8ee461db%2FHR_Wood_texture.jpg?v=1599693164945"
+          crossorigin="anonymous"
+        />
+        <img
+          id="worn_wood"
+          src="https://cdn.glitch.com/8b07de7b-d3e9-49ba-81ae-ba1a8ee461db%2Fworn_wood.jpg?v=1599694072712"
+          crossorigin="anonymous"
+        />
+        <audio
+          id="music"
+          src="https://cdn.glitch.com/285e05bc-2570-484d-933a-dfb85c69cd13%2FDj%20Quads%20-%20Circus.mp3?v=1601950670284"
+          preload="auto"
+          crossorigin="anonymous"
+        ></audio>
+        <audio
+               id="creepymusic"
+               src="https://cdn.glitch.com/285e05bc-2570-484d-933a-dfb85c69cd13%2FCarnival%20of%20the%20Damned.wav?v=1601948463865"
+               crossorigin="anonymous"
+               preload="true"
+               ></audio>
+        <img
+          id="micon"
+          src="https://cdn.glitch.com/8b07de7b-d3e9-49ba-81ae-ba1a8ee461db%2Fmelody-512.png?v=1599702977273"
+          crossorigin="anonymous"
+        />
+        <img
+          id="milk_label"
+          src="https://cdn.glitch.com/8b07de7b-d3e9-49ba-81ae-ba1a8ee461db%2Fmilk_label.png?v=1600102174944"
+          crossorigin="anonymous"
+        />
+        <img
+          id="mute_icon"
+          src="https://cdn.glitch.com/285e05bc-2570-484d-933a-dfb85c69cd13%2Fmute-512.png?v=1601929402620"
+          crossorigin="anonymous"
+        />
+        <audio
+          id="cupclank"
+          src="https://cdn.glitch.com/8b07de7b-d3e9-49ba-81ae-ba1a8ee461db%2Fcup_sound.wav?v=1600112454922"
+          crossorigin="anonymous"
+        ></audio>
+        <audio
+          id="cricket_loud"
+          src="https://cdn.glitch.com/e4db468f-027e-4f02-a59d-1358b710e4c7%2Fcricket-chirp1-loud.wav?v=1600201947297"
+          crossorigin="anonymous"
+        ></audio>
+        <audio
+          id="cricket_quiet"
+          src="https://cdn.glitch.com/e4db468f-027e-4f02-a59d-1358b710e4c7%2Fcricket-chirp2-quiet.wav?v=1600201888192"
+          crossorigin="anonymous"
+        ></audio>
+        <audio
+          id="cricket_ambient"
+          src="https://cdn.glitch.com/e4db468f-027e-4f02-a59d-1358b710e4c7%2Fcricket-chirp3-ambient.mp3?v=1600201884951"
+          crossorigin="anonymous"
+        ></audio>
+        <audio
+          id="cricket_market"
+          src="https://cdn.glitch.com/e4db468f-027e-4f02-a59d-1358b710e4c7%2Fcricket-chirp4-market.wav?v=1600201956185"
+          crossorigin="anonymous"
+        ></audio>
+        <audio
+          id="cricket_cont"
+          src="https://cdn.glitch.com/e4db468f-027e-4f02-a59d-1358b710e4c7%2Fcricket-chirp5-continuous.wav?v=1600201916828"
+          crossorigin="anonymous"
+        ></audio>
+        <img
+          id="skybox"
+          src="https://cdn.glitch.com/285e05bc-2570-484d-933a-dfb85c69cd13%2FLowered-Sunset-2.jpg?v=1601935036020"
+          crossorigin="anonymous"
+        />
+        <img
+          id="skybox2"
+          src="https://cdn.glitch.com/285e05bc-2570-484d-933a-dfb85c69cd13%2FCloudySunset%20(2).jpg?v=1601942955361"
+          crossorigin="anonymous"
+        />
+        <img
+          id="skybox3"
+          src="https://cdn.glitch.com/285e05bc-2570-484d-933a-dfb85c69cd13%2Fred_sky_w_trees.jpg?v=1601942482881"
+          crossorigin="anonymous"
+        />
+      </a-assets>
+      <!-- <img
+          id=""
+          src=""
+          crossorigin="anonymous"
+        /> -->
+      <!-- skybox  color="#005870"-->
+      <a-sky src="#skybox2"></a-sky>
+      <!-- -->
+      <a-entity id="rig">
+        <a-camera
+          camera="active: true"
+          look-controls
+          wasd-controls="acceleration: 80"
+          position="0 1.6 2"
+          fov="50"
+        >
+          <a-entity
+            cursor="fuse: true; fuseTimeout: 500;"
+            raycaster="far: 20; interval: 500; objects: .clickable;"
+            position="0 0 -1"
+            material="color: black; shader: flat"
+          >
+          </a-entity>
+        </a-camera>
+      </a-entity>
+
+      <a-entity
+        id="cr_loud"
+        sound="src: #cricket_loud; positional: true; volume: 0.001; loop: true; poolSize: 1"
+        position="-3 0 -2"
+      >
+      </a-entity>
+      
+      <a-entity
+        id="cr_quiet"
+        sound="src: #cricket_quiet; positional: true; volume: 4; loop: true; poolSize: 1"
+        position="1 0 0"
+      >
+      </a-entity>
+      <a-entity
+        id="cr_amb"
+        sound="src: #cricket_ambient; positional: true; volume: 1; loop: true; poolSize: 1"
+        position="-2 0 5"
+      >
+      </a-entity>
+      <a-entity
+        id="cr_mkt"
+        sound="src: #cricket_market; positional: true; volume: 0.4; loop: true; poolSize: 1"
+        position="0 0 -7"
+      >
+      </a-entity>
+      <a-entity
+        id="cr_cnt"
+        sound="src: #cricket_cont; positional: true; volume: .3; loop: true; poolSize: 1"
+        position="1 0 3"
+      >
+      </a-entity>
+      
+      <a-entity
+        id="creepyplayer"
+        sound="src: #creepymusic; positional: false; volume: 0.1; loop: true; poolSize: 1"
+        position="-3 0 -2"
+      >
+      </a-entity>
+
+      
+
+      <a-entity
+        id="#trash_can"
+        geometry="primitive: cylinder; height: 0.5; radius: .2"
+        shadow
+        position="-1.5 0.65 -2"
+        static-body
+        material="color: #00ba44"
+      >
+      </a-entity>
+
+      <a-entity
+        id="recycle_text"
+        geometry="primitive: plane; width: 1; height: auto"
+        material="opacity: 0"
+        text="width: 2; opacity: 0; align: center; value: throw here to\n reset bottles"
+        position="-1.4 0.77 -1.8"
+        rotation="0 25 0"
+                animation__opacup="autoplay: true;
+                           property: text.opacity; from: 0; to: 1;
+                           delay: 15000;
+                           dur: 1500; loop: false; easing: linear;"
+      >
+      </a-entity>
+
+      <a-entity
+        id="#musicbox"
+        geometry="primitive: cylinder; height: 0.1; radius: 0.5"
+        material="src: #micon; shader: "
+        rotation="0 90 90"
+        position="-2.5 1.7 -2.8"
+        sound="src: #music; positional: false; volume: 0.15; loop: true;"
+        shadow
+        static-body
+      ></a-entity>
+
+      <a-entity
+        id="#musicboxstop"
+        geometry="primitive: cylinder; height: 0.1; radius: 0.5"
+        material="src: #mute_icon; transparent: true; opacity: "
+        position="2.5 1.7 -2.8"
+        rotation="0 90 90"
+        shadow
+      >
+        <a-entity
+          geometry="primitive: cylinder; height: 0.1; radius: 0.5"
+          material="color: red"
+          static-body
+        >
+        </a-entity>
+      </a-entity>
+
+      
+
+      <!--table for holding bottles-->
+      <a-entity
+        id="center_table"
+        geometry="primitive: box; height: 0.5; width: 4; depth: 2"
+        position="0 0.5 -5"
+        material="src: #HR_wood; repeat: 2 1"
+        shadow
+        static-body
+      >
+      </a-entity>
+      <!--table end-->
+
+      <!--counter top for restricting player movement-->
+      <a-entity
+        id="counter_front"
+        geometry="primitive: box; height: 0.7; width: 5.2; depth: .2"
+        position="0 0.7 -3"
+        material="src: #worn_wood; repeat: 3 1"
+        shadow
+        static-body
+      >
+      </a-entity>
+  
+      <a-entity
+        id="tutorialPrompt"
+                class="clickable"
+        geometry="primitive: plane; width: 2.5; height: .7"
+        material="color: red; opacity: 0"
+        position="0 0.75 -2.8"
+        text="width: 4; color: white; align: center; opacity: 1;
+                      value: Click and Drag to Aim\n(look down here!); anchor: center"
+        animation__valuea="resumeEvents: fusing;
+                           autoplay: false;                             
+                           loop: false; easing: linear;
+                           dur: 2000;
+                           property: text.value; to: \n\n\n!!!!\n\n\n"
+        
+        animation__opacdown="resumeEvents: animationcomplete__valuea;
+                             autoplay: false;
+                             property: text.opacity; from: 1; to: 0;
+                             dur: 1500; loop: false; easing: linear;"
+        animation__valueb="resumeEvents: animationcomplete__opacdown;
+                           autoplay: false;
+                           loop: false; easing: linear;
+                           dur: 1000;
+                           property: text.value; to: \n\n\nPress Spacebar to throw\nUse WASD to move\n\n\n"
+        animation__opacup="startEvents: animationcomplete__valueb;
+                           autoplay: false;
+                           property: text.opacity; from: 0; to: 1;
+                           dur: 1500; loop: false; easing: linear;"
+        animation__opacdownagain="startEvents: animationcomplete__opacup;
+                             autoplay: false;
+                             property: text.opacity; from: 1; to: 0;
+                                  delay: 30000;
+                             dur: 1500; loop: false; easing: linear;"
+        animation__valuec="resumeEvents: animationcomplete__opacdownagain;
+                           autoplay: false;
+                           loop: false; easing: linear;
+                           dur: 1000;
+                           property: text.value; to: \n\n\nHit the music disk on the left\nfor a change of pace\n\n\n"
+        animation__opacupagain="startEvents: animationcomplete__valuec;
+                           autoplay: false;
+                           property: text.opacity; from: 0; to: 1;
+                           dur: 1500; loop: false; easing: linear;"
+        
+      >
+      </a-entity>
+
+      <a-entity
+        id="counter_back"
+        geometry="primitive: box; height: 0.7; width: 5.2; depth: .2"
+        position="0 0.7 -7"
+        material="src: #worn_wood; repeat: 3 1"
+        shadow
+        static-body
+      ></a-entity>
+      <a-entity
+        id="counter_right"
+        geometry="primitive: box; height: 0.7; width: .2; depth: 4"
+        position="2.5 0.7 -5"
+        material="src: #worn_wood; repeat: 3 1"
+        shadow
+        static-body
+      ></a-entity>
+      <a-entity
+        id="counter_left"
+        geometry="primitive: box; height: 0.7; width: .2; depth: 4"
+        position="-2.5 0.7 -5"
+        material="src: #worn_wood; repeat: 3 1"
+        shadow
+        static-body
+      ></a-entity>
+
+      <!--counter top for restricting player movement-->
+
+      <!--awning begin-->
+      <a-entity
+        id="pole_fl"
+        geometry="primitive: cylinder; height: 1.7; radius: 0.07"
+        position="-2.5 1.7 -3"
+        material="color: gray"
+        static-body="shape: box"
+        shadow
+      >
+      </a-entity>
+      <a-entity
+        id="pole_fr"
+        geometry="primitive: cylinder; height: 1.7; radius: 0.07"
+        position="2.5 1.7 -3"
+        material="color: gray"
+        static-body="shape: box"
+        shadow
+      >
+      </a-entity>
+      <a-entity
+        id="pole_bl"
+        geometry="primitive: cylinder; height: 1.7; radius: 0.07"
+        position="-2.5 1.7 -7"
+        material="color: gray"
+        static-body="shape: box"
+        shadow
+      >
+      </a-entity>
+      <a-entity
+        id="pole_br"
+        geometry="primitive: cylinder; height: 1.7; radius: 0.07"
+        position="2.5 1.7 -7"
+        material="color: gray"
+        static-body="shape: box"
+        shadow
+      >
+      </a-entity>
+      <a-entity
+        id="roof_square"
+        geometry="primitive: box; height: 0.1; width: 5.2; depth: 4.2;"
+        material="color: #f74600;  roughness: 1"
+        position="0 2.6 -5"
+        static-body
+      >
+      </a-entity>
+
+      <!--roof light-->
+      <a-entity
+        id="roofspotlight"
+        light="type: spot; angle: 45"
+        position="0 2.4 -5"
+        rotation="-90 0 0"
+      >
+      </a-entity>
+
+      <!--roof light end-->
+
+      <!--point light: creating this point light over rides the "default" light included in the scene-->
+      <!--
+      <a-entity
+        id="cntrLite"
+        light="type: point; intensity: 0.8; distance: 100; decay: 1; castShadow:true"
+        position="0 20 0"
+      ></a-entity>
+      -->
+
+      <!--ground: a "static body" -- rotated around y axis to avaid a wird glitch on some screens-->
+      <a-entity
+        id="ground"
+        geometry=" primitive: cylinder; radius: 50; height: 0.71"
+        position="0 0 0"
+        rotation="0 0 0"
+        material="roughness: 1; src: #grasstexture; repeat: 100 100; color:#7BC8A4"
+        shadow="cast: false; receive: true;"
+        static-body
+      ></a-entity>
+
+      <!-- scene lighting -->
+      <!-- ambient lights are not affected by position-->
+      <a-entity light="type: ambient; color: #BBB; intensity: 0"></a-entity>
+
+      <!-- point lights are like lightbulbs, mess with decay and distance-->
+      <a-entity
+        id="kiosklight"
+        light="type: point; intensity: 0.35; decay: 2.0; distance: 10; castShadow: true;"
+        position="0 2 -3.5"
+      ></a-entity>
+      <a-entity
+        id="mboxlight"
+        light="type: point; intensity: 0.8; decay: 2.0; distance: 5; castShadow: true;"
+        position="-2.5 1.7 -2.5"
+      ></a-entity>
+      <a-entity
+        id="mboxstoplight"
+        light="type: point; intensity: 0.8; decay: 2.0; distance: 5; castShadow: true;"
+        position="2.5 1.7 -2.5"
+      ></a-entity>
+
+      <!-- this is basically the "sun" -->
+      <a-entity
+        light="type: directional; color: #FFF; castShadow: false; intensity: 0.01"
+        position="-0.5 1 1"
+      ></a-entity>
+      <!-- scene lighting end -->
+
+      <!---->
+      <!-- backdrop begin -->
+      <a-entity
+        id="backdrop"
+        material="src: #worn_wood; repeat: 10 5"
+        geometry="primitive: box; height: 5; depth: 0.1; width: 20;"
+        position="0 0 -10"
+      >
+      </a-entity>
+      <a-entity
+        material="src: #worn_wood; repeat: 10 5"
+        geometry="primitive: box; height: 5; depth: 0.1; width: 20;"
+        position="0 0 10"
+      >
+      </a-entity>
+      <a-entity
+        material="src: #worn_wood; repeat: 10 5"
+        geometry="primitive: box; height: 5; depth: 0.1; width: 20;"
+        position="-10 0 0"
+        rotation="0 90 0"
+      >
+      </a-entity>
+      <a-entity
+        material="src: #worn_wood; repeat: 10 5"
+        geometry="primitive: box; height: 5; depth: 0.1; width: 20;"
+        position="10 0 0"
+        rotation="0 90 0"
+      >
+      </a-entity>
+      <!--backdrop end-->
+      
+      <!--bottle prototype-->
+      <!--i'm thinking cylinder, cone, cylinder-->
+      <!--sound="src: #cupclank; positional: true; volume: 0.1; loop: false; poolSize: 1; on: collide"-->
+      <!--disabled
+      <a-entity
+        id="milkbottle"
+        scale="0.5 0.5 0.5"
+        position="1 0.9 -5"
+        dynamic-body="mass: 30"
+        
+      >
+        <a-entity
+          geometry="primitive: cylinder; height: 0.3; radius: 0.1"
+          rotation="0 180 0"
+          material="src: #milk_label"
+        >
+          <a-entity
+            geometry="primitive: cone; radiusBottom: 0.1; radiusTop: 0; height: 0.3"
+            material="color: white"
+            position="0 0.3 0"
+          >
+            <a-entity
+              geometry="primitive: cylinder; height: 0.3; radius: 0.05"
+              material="color: white"
+              position="0 0 0"
+            >
+            </a-entity>
+          </a-entity>
+        </a-entity>
+      </a-entity>
+
+      <!--bottles end-->
+      <!--
+      <a-entity
+        id="tutorialText"
+        geometry="primitive: plane; width: 2.0; height: 0.5"
+        material="color: blue; opacity: 0"
+        position="0 0.8 -2.81"
+        text="width: 3.5; color: white; align: center; opacity: 0;
+                      value: Press Spacebar to throw\nUse WASD to move"
+        animation__movett=" 
+                           resumeEvents: click, mousedown, mouseup, mouseleave, mouseenter, fusing;
+                           autoplay: false;
+                           property: position; to: 0 0.8 -2.8;
+                           dur: 50; loop: false; easing: linear;"
+        animation__opac="
+                                 resumeEvents: animationcomplete__movett;
+                                 autoplay: false;
+                                 delay: 0;
+                                 property: text.opacity; from: 0; to: 1;
+                                 dur: 500; loop: false; easing: linear;"
+      >
+      </a-entity>
+
+animation__moveq="resumeEvents: animationcomplete__opacreverse;
+                          autoplay: false;
+                          enabled: false
+                          property: position; to: 0 0.8 -2.9;
+                          dur: 500; loop: false; easing: linear;"
+-->
+    </a-scene>
+  </body>
+</html>
